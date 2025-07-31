@@ -1,57 +1,90 @@
 // context/AuthContext.js
 
 import React, { createContext, useState, useEffect, useMemo } from "react";
-import { loginUser, registerUser, logoutUser, observeAuthState } from "../services/firebaseService"; // Import Firebase functions
+// Import all necessary Firebase functions directly from the service
+import {
+  loginUser,
+  registerUser,
+  logoutUser,
+  observeAuthState,
+  db, // <--- Import the initialized Firestore instance
+  doc, // <--- Import doc
+  getDoc, // <--- Import getDoc
+} from "../services/firebaseService";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // Stores the Firebase User object (or null)
-  const [isLoading, setIsLoading] = useState(true); // To check if authentication state is being restored
+  const [user, setUser] = useState(null);
+  const [externalId, setExternalId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // This listener will automatically update the user state when auth state changes (login/logout/registration)
-    const unsubscribe = observeAuthState((firebaseUser) => {
+    console.log("AuthContext: Setting up auth state observer."); // <-- New log
+    const unsubscribe = observeAuthState(async (firebaseUser) => {
+      // --- CRUCIAL NEW LOG HERE ---
+      console.log("AuthContext: onAuthStateChanged fired. firebaseUser:", firebaseUser ? firebaseUser.email : null);
+      // --- END NEW LOG ---
       setUser(firebaseUser);
+      if (firebaseUser) {
+        // If a user is logged in, try to fetch their profile to get externalId
+        console.log("AuthContext: User detected/logged in. UID:", firebaseUser.uid);
+        const userProfileRef = doc(db, "user_profiles", firebaseUser.uid);
+        try {
+          const docSnap = await getDoc(userProfileRef);
+          if (docSnap.exists()) {
+            setExternalId(docSnap.data().external_id);
+            console.log("Fetched externalId:", docSnap.data().external_id);
+          } else {
+            console.warn("User profile not found in Firestore for UID:", firebaseUser.uid);
+            setExternalId(null);
+          }
+        } catch (fetchError) {
+          console.error("Error fetching user profile:", fetchError);
+          setExternalId(null);
+        }
+      } else {
+        console.log("AuthContext: No user detected (logged out). Clearing externalId.\
+                    --------------------------------------------------------------------------------------------\
+                    ");
+        setExternalId(null); // Clear externalId on logout
+      }
       setIsLoading(false);
     });
 
-    // Clean up the subscription when the component unmounts
     return unsubscribe;
-  }, []);
+  }, []); // Empty dependency array means this runs once on mount
 
   const authContext = useMemo(
     () => ({
-      // Login function
       signIn: async (email, password) => {
         setIsLoading(true);
         const result = await loginUser(email, password);
-        // setUser is handled by the onAuthStateChanged listener
+        // The onAuthStateChanged listener handles setting user and externalId
         setIsLoading(false);
-        return result; // { success: boolean, error?: string }
+        return result;
       },
 
-      // Register function
       signUp: async (email, password) => {
         setIsLoading(true);
         const result = await registerUser(email, password);
-        // setUser is handled by the onAuthStateChanged listener
+        // The onAuthStateChanged listener handles setting user and externalId
         setIsLoading(false);
-        return result; // { success: boolean, error?: string }
+        return result;
       },
 
-      // Logout function
       signOut: async () => {
         setIsLoading(true);
         const result = await logoutUser();
-        // setUser is handled by the onAuthStateChanged listener
+        // The onAuthStateChanged listener handles setting user and externalId
         setIsLoading(false);
-        return result; // { success: boolean, error?: string }
+        return result;
       },
-      user, // The actual Firebase User object (or null if logged out)
-      isLoading, // True while checking initial auth state or during auth operations
+      user,
+      externalId,
+      isLoading,
     }),
-    [user, isLoading]
+    [user, externalId, isLoading]
   );
 
   return (

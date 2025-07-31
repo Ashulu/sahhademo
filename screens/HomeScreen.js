@@ -11,43 +11,59 @@ import {
   ScrollView,
 } from "react-native";
 import AuthContext from "../context/AuthContext";
-import { fetchProtectedDataFromFirestore } from "../services/firebaseService"; // Import from Firebase service
+import { fetchProtectedDataFromFirestore } from "../services/firebaseService";
 
 const HomeScreen = () => {
-  const { user, signOut } = useContext(AuthContext); // Use 'user' instead of 'userToken'
+  const { user, externalId, signOut } = useContext(AuthContext); // <--- Get externalId
   const [data, setData] = useState(null);
   const [loadingData, setLoadingData] = useState(false);
   const [dataError, setDataError] = useState("");
 
   const handleLinkAccount = () => {
     Alert.alert(
-      "Link Account",
-      "This button would trigger the process to link an external account. (e.g., redirect to OAuth provider)"
+      "Link Account (Sahha Integration)",
+      `This is where you'd use externalId: ${externalId || 'N/A'} to authenticate with Sahha.
+      \nSahha User Profile Link: https://docs.sahha.ai/docs/data-flow/sdk/user-profiles`
     );
-    console.log("Link Account button pressed.");
-    // Here you would integrate with your actual "Link Account" API
+    console.log("Link Account button pressed. External ID:", externalId);
+    // You would use `externalId` here to initiate Sahha authentication.
+    // E.g., const sahhaToken = await sahhaService.authenticate(externalId, someOtherParams);
   };
 
   const handleFetchData = async () => {
+    console.log("--- Fetch Data Attempt ---");
+    if (user) {
+      console.log("User IS logged in. Email:", user.email, "UID:", user.uid);
+      console.log("User External ID:", externalId); // Log the external ID
+    } else {
+      console.log("User is NOT logged in.");
+      Alert.alert("Authentication Required", "Please log in before fetching data.");
+      setLoadingData(false);
+      return;
+    }
+    console.log("Attempting to fetch data from Firestore...");
+
     setData(null);
     setDataError("");
     setLoadingData(true);
     try {
-      // Call the Firestore fetching function
       const response = await fetchProtectedDataFromFirestore();
-      if (response.success) { // Check for success property from firebaseService
+      if (response.success) {
         setData(response.data);
+        console.log("Data fetched successfully:", response.data);
       } else {
         setDataError(response.error || "Failed to fetch data.");
         Alert.alert("Fetch Data Failed", response.error || "Please try again.");
+        console.error("Failed to fetch data with error:", response.error);
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Catch block error during data fetch:", error);
       setDataError("Network error or unexpected issue.");
       Alert.alert("Error", "Could not connect to API or unexpected error.");
     } finally {
       setLoadingData(false);
     }
+    console.log("--- End Fetch Data Attempt ---");
   };
 
   return (
@@ -56,9 +72,15 @@ const HomeScreen = () => {
       <Text style={styles.subtitle}>
         You are authenticated as:{" "}
         <Text style={styles.tokenText}>
-          {user ? user.email : "N/A"} {/* Display user email */}
+          {user ? user.email : "N/A"}
         </Text>
       </Text>
+      {externalId && ( // Only show if externalId exists
+        <Text style={styles.subtitle}>
+          Your Sahha External ID:{" "}
+          <Text style={styles.tokenText}>{externalId.substring(0, 8)}...</Text>
+        </Text>
+      )}
 
       <View style={styles.buttonContainer}>
         <Button title="Link Account" onPress={handleLinkAccount} />
@@ -112,7 +134,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    marginBottom: 30,
+    marginBottom: 10, // Adjusted for second subtitle
     textAlign: "center",
     color: "#555",
   },
@@ -122,6 +144,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: "80%",
+    marginTop: 20, // Adjusted margin
     marginBottom: 30,
   },
   loaderContainer: {

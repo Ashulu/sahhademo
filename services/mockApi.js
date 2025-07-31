@@ -1,3 +1,4 @@
+
 const MOCK_USERS = {
   "user@example.com": "password123",
   "demo@test.com": "demo",
