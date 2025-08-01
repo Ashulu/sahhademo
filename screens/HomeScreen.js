@@ -13,21 +13,81 @@ import {
 import AuthContext from "../context/AuthContext";
 import { fetchProtectedDataFromFirestore } from "../services/firebaseService";
 
+import  Sahha  from 'sahha-react-native';
+
+const SAHHA_APP_ID = "xYJOA4zzraZaZlXUPtNDrZt5p1MEh59r";
+const SAHHA_APP_SECRET = "YR72qh0KAgyIVpn15cVMYb999GRhM1KQo6GpZATO0Pz6zwzBoTiB5jfwBIIonyCa";
+
 const HomeScreen = () => {
   const { user, externalId, signOut } = useContext(AuthContext); // <--- Get externalId
   const [data, setData] = useState(null);
   const [loadingData, setLoadingData] = useState(false);
   const [dataError, setDataError] = useState("");
+  const [sahhaAuthStatus, setSahhaAuthStatus] = useState("Not Authenticated with Sahha"); // Initial status
+  const [isSahhaAuthenticating, setIsSahhaAuthenticating] = useState(false);
+
+  // const handleLinkAccount = async () => {
+  //   if (!externalId) {
+  //     Alert.alert("Error", "External ID not available. Please ensure user profile is created/fetched.");
+  //     console.warn("HomeScreen: Cannot link account: externalId is N/A.");
+  //     return;
+  //   }
+
+  //   setIsSahhaAuthenticating(true);
+  //   setSahhaAuthStatus("Authenticating with Sahha...");
+  //   console.log("HomeScreen: Attempting to authenticate with Sahha using external ID:", externalId);
+
+  //   try {
+  //     // Call Sahha's authenticate method with the external_id
+  //     // Refer to Sahha's API-docs for the exact expected response structure.
+  //     // https://sandbox-api.sahha.ai/api-docs/index.html#tag/Profile-Authentication
+  //     const authResult = await Sahha.authenticate({ external_id: externalId });
+
+  //     console.log("HomeScreen: Sahha Authentication Result:", authResult);
+
+  //     // Assuming Sahha.authenticate returns a success indicator (e.g., authResult.status or just a successful promise resolve)
+  //     // You might need to adjust this `if` condition based on the actual Sahha SDK response.
+  //     if (authResult) { // Simplistic check, adjust based on Sahha's success response
+  //       setSahhaAuthStatus("Authenticated with Sahha! (Check Console)");
+  //       Alert.alert("Sahha Success", "Successfully authenticated with Sahha! Check console for full result.");
+  //       // If Sahha returns an access token or session info, you'd store it here (e.g., with SecureStore)
+  //       // await SecureStore.setItemAsync('sahhaAccessToken', authResult.access_token);
+  //     } else {
+  //       setSahhaAuthStatus("Sahha Auth Failed: Unknown result.");
+  //       Alert.alert("Sahha Failed", "Could not authenticate with Sahha. Unknown result.");
+  //     }
+  //   } catch (error) {
+  //     console.error("HomeScreen: Error during Sahha authentication:", error);
+  //     setSahhaAuthStatus(`Sahha Auth Error: ${error.message || 'Network issue / SDK problem'}`);
+  //     Alert.alert("Sahha Error", `Failed to authenticate with Sahha: ${error.message || 'Please check network and Sahha configuration.'}`);
+  //   } finally {
+  //     setIsSahhaAuthenticating(false);
+  //   }
+  // };
 
   const handleLinkAccount = () => {
-    Alert.alert(
-      "Link Account (Sahha Integration)",
-      `This is where you'd use externalId: ${externalId || 'N/A'} to authenticate with Sahha.
-      \nSahha User Profile Link: https://docs.sahha.ai/docs/data-flow/sdk/user-profiles`
-    );
-    console.log("Link Account button pressed. External ID:", externalId);
-    // You would use `externalId` here to initiate Sahha authentication.
-    // E.g., const sahhaToken = await sahhaService.authenticate(externalId, someOtherParams);
+    if (!externalId) {
+      Alert.alert("Error", "External ID not available.");
+      return;
+    }
+
+    setIsSahhaAuthenticating(true);
+    setSahhaAuthStatus("Authenticating with Sahha...");
+    console.log("HomeScreen: Attempting to authenticate with Sahha using external ID:", externalId);
+
+    // CORRECTED CALL: Pass arguments individually as per the native signature.
+    Sahha.authenticate(SAHHA_APP_ID, SAHHA_APP_SECRET, externalId, (error, result) => {
+      if (error) {
+        console.error("HomeScreen: Sahha.authenticate callback reports an error:", error);
+        setSahhaAuthStatus(`Sahha Auth Error: ${error.message || 'Unknown error'}`);
+        Alert.alert("Sahha Error", `Failed to authenticate: ${error.message || 'Please check logs.'}`);
+      } else {
+        console.log("HomeScreen: Sahha.authenticate callback reports success. Result:", result);
+        setSahhaAuthStatus("Authenticated with Sahha! (Check Console)");
+        Alert.alert("Sahha Success", "Successfully authenticated with Sahha! Check console for full result.");
+      }
+      setIsSahhaAuthenticating(false);
+    });
   };
 
   const handleFetchData = async () => {
@@ -78,12 +138,19 @@ const HomeScreen = () => {
       {externalId && ( // Only show if externalId exists
         <Text style={styles.subtitle}>
           Your Sahha External ID:{" "}
-          <Text style={styles.tokenText}>{externalId.substring(0, 8)}...</Text>
+          <Text style={styles.tokenText}>{externalId}...</Text>
         </Text>
       )}
 
+      {/* Display Sahha Auth Status */}
+      <Text style={styles.sahhaStatus}>Sahha Status: {sahhaAuthStatus}</Text>
+
       <View style={styles.buttonContainer}>
-        <Button title="Link Account" onPress={handleLinkAccount} />
+        <Button
+          title={isSahhaAuthenticating ? "Linking..." : "Link Account"}
+          onPress={handleLinkAccount}
+          disabled={isSahhaAuthenticating || !externalId} // Disable if no externalId
+        />
         <View style={{ marginVertical: 10 }} />
         <Button
           title={loadingData ? "Fetching Data..." : "Fetch Data"}
