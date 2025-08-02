@@ -9,61 +9,26 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Linking,
 } from "react-native";
 import AuthContext from "../context/AuthContext";
 import { fetchProtectedDataFromFirestore } from "../services/firebaseService";
 
-import  Sahha  from 'sahha-react-native';
+import Sahha, { SahhaSensor } from 'sahha-react-native';
 
 const SAHHA_APP_ID = "xYJOA4zzraZaZlXUPtNDrZt5p1MEh59r";
 const SAHHA_APP_SECRET = "YR72qh0KAgyIVpn15cVMYb999GRhM1KQo6GpZATO0Pz6zwzBoTiB5jfwBIIonyCa";
 
 const HomeScreen = () => {
-  const { user, externalId, signOut } = useContext(AuthContext); // <--- Get externalId
+  const { user, externalId, signOut, sensorStatus, checkSensorStatus } = useContext(AuthContext); // <--- Get externalId
   const [data, setData] = useState(null);
   const [loadingData, setLoadingData] = useState(false);
   const [dataError, setDataError] = useState("");
   const [sahhaAuthStatus, setSahhaAuthStatus] = useState("Not Authenticated with Sahha"); // Initial status
   const [isSahhaAuthenticating, setIsSahhaAuthenticating] = useState(false);
+  const [isEnablingSensors, setIsEnablingSensors] = useState(false);
 
-  // const handleLinkAccount = async () => {
-  //   if (!externalId) {
-  //     Alert.alert("Error", "External ID not available. Please ensure user profile is created/fetched.");
-  //     console.warn("HomeScreen: Cannot link account: externalId is N/A.");
-  //     return;
-  //   }
 
-  //   setIsSahhaAuthenticating(true);
-  //   setSahhaAuthStatus("Authenticating with Sahha...");
-  //   console.log("HomeScreen: Attempting to authenticate with Sahha using external ID:", externalId);
-
-  //   try {
-  //     // Call Sahha's authenticate method with the external_id
-  //     // Refer to Sahha's API-docs for the exact expected response structure.
-  //     // https://sandbox-api.sahha.ai/api-docs/index.html#tag/Profile-Authentication
-  //     const authResult = await Sahha.authenticate({ external_id: externalId });
-
-  //     console.log("HomeScreen: Sahha Authentication Result:", authResult);
-
-  //     // Assuming Sahha.authenticate returns a success indicator (e.g., authResult.status or just a successful promise resolve)
-  //     // You might need to adjust this `if` condition based on the actual Sahha SDK response.
-  //     if (authResult) { // Simplistic check, adjust based on Sahha's success response
-  //       setSahhaAuthStatus("Authenticated with Sahha! (Check Console)");
-  //       Alert.alert("Sahha Success", "Successfully authenticated with Sahha! Check console for full result.");
-  //       // If Sahha returns an access token or session info, you'd store it here (e.g., with SecureStore)
-  //       // await SecureStore.setItemAsync('sahhaAccessToken', authResult.access_token);
-  //     } else {
-  //       setSahhaAuthStatus("Sahha Auth Failed: Unknown result.");
-  //       Alert.alert("Sahha Failed", "Could not authenticate with Sahha. Unknown result.");
-  //     }
-  //   } catch (error) {
-  //     console.error("HomeScreen: Error during Sahha authentication:", error);
-  //     setSahhaAuthStatus(`Sahha Auth Error: ${error.message || 'Network issue / SDK problem'}`);
-  //     Alert.alert("Sahha Error", `Failed to authenticate with Sahha: ${error.message || 'Please check network and Sahha configuration.'}`);
-  //   } finally {
-  //     setIsSahhaAuthenticating(false);
-  //   }
-  // };
 
   const handleLinkAccount = () => {
     if (!externalId) {
@@ -87,6 +52,46 @@ const HomeScreen = () => {
         Alert.alert("Sahha Success", "Successfully authenticated with Sahha! Check console for full result.");
       }
       setIsSahhaAuthenticating(false);
+    });
+  };
+
+  const handleEnableSensors = () => {
+    // Logic Branch 1: If sensors are already enabled, do nothing.
+    if (sensorStatus === 'Enabled') {
+      Alert.alert("Already Enabled", "Sensor data collection is already active.");
+      return;
+    }
+
+    // Logic Branch 2: If permissions were previously denied, guide user to settings.
+    if (sensorStatus === 'Not Enabled') {
+      Alert.alert(
+        "Permission Required",
+        "To enable sensors, you must grant permission in your iPhone's Settings. Please go to Settings > Privacy > Motion & Fitness.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Open Settings", onPress: () => Sahha.openAppSettings() } // This opens the app's specific settings page
+        ]
+      );
+      return;
+    }
+
+    // Logic Branch 3: Default case (status is "Pending" or "Unknown").
+    // This will trigger the iOS pop-up the first time the app is run.
+    setIsEnablingSensors(true);
+    console.log("HomeScreen: Attempting to enable Sahha sensors using enableSensors()...");
+    const sensorsToEnable = [String(SahhaSensor.sleep), String(SahhaSensor.steps)];
+
+    Sahha.enableSensors(sensorsToEnable, (error, result) => {
+      if (error) {
+        console.error("HomeScreen: Sahha.enableSensors callback reports an error:", error);
+        Alert.alert("Sensor Error", `Failed to enable sensors: ${error.message || 'Please check logs.'}`);
+      } else {
+        console.log("HomeScreen: Sahha.enableSensors callback reports success. Result:", result);
+        Alert.alert("Permission Flow Complete", "Checking the new sensor status...");
+      }
+      // Always re-check the status to get the definitive new state after the flow.
+      checkSensorStatus();
+      setIsEnablingSensors(false);
     });
   };
 
@@ -144,6 +149,7 @@ const HomeScreen = () => {
 
       {/* Display Sahha Auth Status */}
       <Text style={styles.sahhaStatus}>Sahha Status: {sahhaAuthStatus}</Text>
+      <Text style={styles.sahhaStatus}>Sensor Status: {sensorStatus}</Text>
 
       <View style={styles.buttonContainer}>
         <Button
@@ -152,6 +158,13 @@ const HomeScreen = () => {
           disabled={isSahhaAuthenticating || !externalId} // Disable if no externalId
         />
         <View style={{ marginVertical: 10 }} />
+
+        <Button
+          title={isEnablingSensors ? "Enabling Sensors..." : "Enable Sahha Sensors"}
+          onPress={handleEnableSensors}
+          disabled={!sahhaAuthStatus.includes('Authenticated') || isEnablingSensors}
+        />
+
         <Button
           title={loadingData ? "Fetching Data..." : "Fetch Data"}
           onPress={handleFetchData}
@@ -251,6 +264,14 @@ const styles = StyleSheet.create({
   spacer: {
     flex: 1,
   },
+  sahhaStatus: {
+    fontSize: 14,
+    marginTop: 5, // Reduced margin to fit more status text
+    marginBottom: 5,
+    color: '#666',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  }
 });
 
 export default HomeScreen;
