@@ -14,7 +14,7 @@ import {
 import AuthContext from "../context/AuthContext";
 import { fetchProtectedDataFromFirestore } from "../services/firebaseService";
 
-import Sahha, { SahhaSensor } from 'sahha-react-native';
+import Sahha, { SahhaSensor, SahhaScoreType } from 'sahha-react-native';
 
 const SAHHA_APP_ID = "xYJOA4zzraZaZlXUPtNDrZt5p1MEh59r";
 const SAHHA_APP_SECRET = "YR72qh0KAgyIVpn15cVMYb999GRhM1KQo6GpZATO0Pz6zwzBoTiB5jfwBIIonyCa";
@@ -28,6 +28,9 @@ const HomeScreen = () => {
   const [isSahhaAuthenticating, setIsSahhaAuthenticating] = useState(false);
   const [isEnablingSensors, setIsEnablingSensors] = useState(false);
 
+  const [analysisData, setAnalysisData] = useState(null);
+  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+  const [analysisError, setAnalysisError] = useState("");
 
 
   const handleLinkAccount = () => {
@@ -131,6 +134,50 @@ const HomeScreen = () => {
     console.log("--- End Fetch Data Attempt ---");
   };
 
+// --- NEW: Placeholder handler function for Step 3 ---
+const handleGetSleepStats = () => {
+  console.log("HomeScreen: 'Get Sleep Stats' button pressed.");
+  
+  setIsLoadingAnalysis(true);
+  setAnalysisData(null);
+  setAnalysisError("");
+
+  // Create date objects for the last 7 days.
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(endDate.getDate() - 1);
+
+  console.log(`HomeScreen: Fetching stats from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+
+  // CORRECTED: Call Sahha.getStats() with the sensor enum and DATES CONVERTED TO MILLISECONDS.
+  Sahha.getScores(
+    [SahhaScoreType.sleep, SahhaScoreType.activity, SahhaScoreType.wellbeing],
+    startDate.getTime(), // Pass milliseconds
+    endDate.getTime(),   // Pass milliseconds
+    (error, value) => {
+      if (error) {
+        console.error("HomeScreen: Sahha.getStats for Sleep callback reports an error:", error);
+        setAnalysisError(`Failed to get sleep stats: ${error}`);
+        Alert.alert("Stats Error", `Failed to get sleep stats: ${error}`);
+      } else if (value) {
+        try {
+          // The documentation shows 'value' is a JSON string that needs to be parsed.
+          const statsArray = JSON.parse(value);
+          console.log("HomeScreen: Sahha.getStats for Sleep callback reports success. Parsed Data:", statsArray);
+          setAnalysisData(statsArray);
+        } catch (parseError) {
+          console.error("HomeScreen: Failed to parse stats JSON:", parseError);
+          setAnalysisError("Failed to parse stats data.");
+          Alert.alert("Data Error", "Received stats but could not parse the data.");
+        }
+      }
+      
+      setIsLoadingAnalysis(false);
+    }
+  );
+};
+// --- END NEW ---
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Welcome Home!</Text>
@@ -165,6 +212,14 @@ const HomeScreen = () => {
           disabled={!sahhaAuthStatus.includes('Authenticated') || isEnablingSensors}
         />
 
+        {/* --- NEW: "Get Sahha Analysis" Button --- */}
+        <Button
+          title={isLoadingAnalysis ? "Fetching Stats..." : "Get Sahha Stats"}
+          onPress={handleGetSleepStats}
+          disabled={sensorStatus !== 'Enabled' || isLoadingAnalysis}
+        />
+        {/* --- END NEW --- */}
+
         <Button
           title={loadingData ? "Fetching Data..." : "Fetch Data"}
           onPress={handleFetchData}
@@ -178,6 +233,23 @@ const HomeScreen = () => {
           <Text style={styles.loaderText}>Loading Data...</Text>
         </View>
       )}
+
+      {/* --- NEW: Placeholder UI for Analysis Data --- */}
+      {isLoadingAnalysis && <ActivityIndicator size="large" color="#0000ff" />}
+
+      {analysisError ? (
+        <Text style={styles.errorText}>{analysisError}</Text>
+      ) : null}
+
+      {analysisData && (
+        <View style={styles.dataContainer}>
+          <Text style={styles.dataTitle}>Sahha Analysis Data:</Text>
+          <Text style={styles.dataText}>
+            {JSON.stringify(analysisData, null, 2)}
+          </Text>
+        </View>
+      )}
+      {/* --- END NEW --- */}
 
       {dataError ? (
         <Text style={styles.errorText}>{dataError}</Text>
