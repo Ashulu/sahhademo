@@ -10,20 +10,20 @@ import {
   Alert,
   ScrollView,
   Linking,
+  FlatList,
 } from "react-native";
 import AuthContext from "../context/AuthContext";
 import { fetchProtectedDataFromFirestore } from "../services/firebaseService";
 
 import Sahha, { SahhaSensor, SahhaScoreType } from 'sahha-react-native';
 
+import StatCard from '../components/StatCard';
+
 const SAHHA_APP_ID = "xYJOA4zzraZaZlXUPtNDrZt5p1MEh59r";
 const SAHHA_APP_SECRET = "YR72qh0KAgyIVpn15cVMYb999GRhM1KQo6GpZATO0Pz6zwzBoTiB5jfwBIIonyCa";
 
 const HomeScreen = () => {
   const { user, externalId, signOut, sensorStatus, checkSensorStatus } = useContext(AuthContext); // <--- Get externalId
-  const [data, setData] = useState(null);
-  const [loadingData, setLoadingData] = useState(false);
-  const [dataError, setDataError] = useState("");
   const [sahhaAuthStatus, setSahhaAuthStatus] = useState("Not Authenticated with Sahha"); // Initial status
   const [isSahhaAuthenticating, setIsSahhaAuthenticating] = useState(false);
   const [isEnablingSensors, setIsEnablingSensors] = useState(false);
@@ -98,41 +98,6 @@ const HomeScreen = () => {
     });
   };
 
-  const handleFetchData = async () => {
-    console.log("--- Fetch Data Attempt ---");
-    if (user) {
-      console.log("User IS logged in. Email:", user.email, "UID:", user.uid);
-      console.log("User External ID:", externalId); // Log the external ID
-    } else {
-      console.log("User is NOT logged in.");
-      Alert.alert("Authentication Required", "Please log in before fetching data.");
-      setLoadingData(false);
-      return;
-    }
-    console.log("Attempting to fetch data from Firestore...");
-
-    setData(null);
-    setDataError("");
-    setLoadingData(true);
-    try {
-      const response = await fetchProtectedDataFromFirestore();
-      if (response.success) {
-        setData(response.data);
-        console.log("Data fetched successfully:", response.data);
-      } else {
-        setDataError(response.error || "Failed to fetch data.");
-        Alert.alert("Fetch Data Failed", response.error || "Please try again.");
-        console.error("Failed to fetch data with error:", response.error);
-      }
-    } catch (error) {
-      console.error("Catch block error during data fetch:", error);
-      setDataError("Network error or unexpected issue.");
-      Alert.alert("Error", "Could not connect to API or unexpected error.");
-    } finally {
-      setLoadingData(false);
-    }
-    console.log("--- End Fetch Data Attempt ---");
-  };
 
 // --- NEW: Placeholder handler function for Step 3 ---
 const handleGetSleepStats = () => {
@@ -220,19 +185,7 @@ const handleGetSleepStats = () => {
         />
         {/* --- END NEW --- */}
 
-        <Button
-          title={loadingData ? "Fetching Data..." : "Fetch Data"}
-          onPress={handleFetchData}
-          disabled={loadingData}
-        />
       </View>
-
-      {loadingData && (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#0000ff" />
-          <Text style={styles.loaderText}>Loading Data...</Text>
-        </View>
-      )}
 
       {/* --- NEW: Placeholder UI for Analysis Data --- */}
       {isLoadingAnalysis && <ActivityIndicator size="large" color="#0000ff" />}
@@ -242,27 +195,17 @@ const handleGetSleepStats = () => {
       ) : null}
 
       {analysisData && (
-        <View style={styles.dataContainer}>
-          <Text style={styles.dataTitle}>Sahha Analysis Data:</Text>
-          <Text style={styles.dataText}>
-            {JSON.stringify(analysisData, null, 2)}
-          </Text>
+        <View style={styles.listContainer}>
+          <Text style={styles.dataTitle}>Sahha Analysis</Text>
+          <FlatList
+            data={analysisData}
+            renderItem={({ item }) => <StatCard item={item} />}
+            keyExtractor={(item) => item.id}
+          />
         </View>
       )}
       {/* --- END NEW --- */}
 
-      {dataError ? (
-        <Text style={styles.errorText}>{dataError}</Text>
-      ) : null}
-
-      {data && (
-        <View style={styles.dataContainer}>
-          <Text style={styles.dataTitle}>Fetched Data from Firestore:</Text>
-          <Text style={styles.dataText}>
-            {JSON.stringify(data, null, 2)}
-          </Text>
-        </View>
-      )}
 
       <View style={styles.spacer} />
       <Button title="Logout" onPress={signOut} color="red" />
@@ -277,6 +220,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
     backgroundColor: "#f5f5f5",
+  },
+  listContainer: { // <--- ADD THIS NEW STYLE
+    width: '100%',
+    marginTop: 20,
   },
   title: {
     fontSize: 28,

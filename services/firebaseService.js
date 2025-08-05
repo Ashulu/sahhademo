@@ -123,19 +123,3 @@ export const observeAuthState = (callback) => {
  * Assumes a 'protected_data' collection and a 'demo_doc' document for this example.
  * @returns {Promise<{data: any}|{error: string}>}
  */
-export const fetchProtectedDataFromFirestore = async () => {
-  try {
-    const docRef = doc(db, "/protected_data/user"); // Adjust collection/document as needed
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      return { success: true, data: docSnap.data() };
-    } else {
-      console.warn("No such document!");
-      return { success: false, error: "No protected data found." };
-    }
-  } catch (error) {
-    console.error("Firestore Data Fetch Error:", error);
-    return { success: false, error: "Failed to fetch data from Firestore." };
-  }
-};
