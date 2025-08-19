@@ -19,8 +19,8 @@ import Sahha, { SahhaSensor, SahhaScoreType } from 'sahha-react-native';
 
 import StatCard from '../components/StatCard';
 
-const SAHHA_APP_ID = "xYJOA4zzraZaZlXUPtNDrZt5p1MEh59r";
-const SAHHA_APP_SECRET = "YR72qh0KAgyIVpn15cVMYb999GRhM1KQo6GpZATO0Pz6zwzBoTiB5jfwBIIonyCa";
+const SAHHA_APP_ID = process.env.EXPO_PUBLIC_SAHHA_APP_ID;
+const SAHHA_APP_SECRET = process.env.EXPO_PUBLIC_SAHHA_APP_SECRET;
 
 const HomeScreen = () => {
   const { user, externalId, signOut, sensorStatus, checkSensorStatus } = useContext(AuthContext); // <--- Get externalId
@@ -98,50 +98,48 @@ const HomeScreen = () => {
     });
   };
 
-
 // --- NEW: Placeholder handler function for Step 3 ---
-const handleGetSleepStats = () => {
-  console.log("HomeScreen: 'Get Sleep Stats' button pressed.");
-  
-  setIsLoadingAnalysis(true);
-  setAnalysisData(null);
-  setAnalysisError("");
+  const handleGetSleepStats = () => {
+    console.log("HomeScreen: 'Get Sleep Stats' button pressed.");
+    
+    setIsLoadingAnalysis(true);
+    setAnalysisData(null);
+    setAnalysisError("");
 
-  // Create date objects for the last 7 days.
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(endDate.getDate() - 1);
+    // Create date objects for the last 7 days.
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - 7);
 
-  console.log(`HomeScreen: Fetching stats from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+    console.log(`HomeScreen: Fetching stats from ${startDate.toISOString()} to ${endDate.toISOString()}`);
 
-  // CORRECTED: Call Sahha.getStats() with the sensor enum and DATES CONVERTED TO MILLISECONDS.
-  Sahha.getScores(
-    [SahhaScoreType.sleep, SahhaScoreType.activity, SahhaScoreType.wellbeing],
-    startDate.getTime(), // Pass milliseconds
-    endDate.getTime(),   // Pass milliseconds
-    (error, value) => {
-      if (error) {
-        console.error("HomeScreen: Sahha.getStats for Sleep callback reports an error:", error);
-        setAnalysisError(`Failed to get sleep stats: ${error}`);
-        Alert.alert("Stats Error", `Failed to get sleep stats: ${error}`);
-      } else if (value) {
-        try {
-          // The documentation shows 'value' is a JSON string that needs to be parsed.
-          const statsArray = JSON.parse(value);
-          console.log("HomeScreen: Sahha.getStats for Sleep callback reports success. Parsed Data:", statsArray);
-          setAnalysisData(statsArray);
-        } catch (parseError) {
-          console.error("HomeScreen: Failed to parse stats JSON:", parseError);
-          setAnalysisError("Failed to parse stats data.");
-          Alert.alert("Data Error", "Received stats but could not parse the data.");
+    // CORRECTED: Call Sahha.getStats() with the sensor enum and DATES CONVERTED TO MILLISECONDS.
+    Sahha.getScores(
+      [SahhaScoreType.sleep, SahhaScoreType.activity, SahhaScoreType.wellbeing],
+      startDate.getTime(), // Pass milliseconds
+      endDate.getTime(),   // Pass milliseconds
+      (error, value) => {
+        if (error) {
+          console.error("HomeScreen: Sahha.getStats for Sleep callback reports an error:", error);
+          setAnalysisError(`Failed to get sleep stats: ${error}`);
+          Alert.alert("Stats Error", `Failed to get sleep stats: ${error}`);
+        } else if (value) {
+          try {
+            // The documentation shows 'value' is a JSON string that needs to be parsed.
+            const statsArray = JSON.parse(value);
+            console.log("HomeScreen: Sahha.getStats for Sleep callback reports success. Parsed Data:", statsArray);
+            setAnalysisData(statsArray);
+          } catch (parseError) {
+            console.error("HomeScreen: Failed to parse stats JSON:", parseError);
+            setAnalysisError("Failed to parse stats data.");
+            Alert.alert("Data Error", "Received stats but could not parse the data.");
+          }
         }
+        
+        setIsLoadingAnalysis(false);
       }
-      
-      setIsLoadingAnalysis(false);
-    }
-  );
-};
-// --- END NEW ---
+    );
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>

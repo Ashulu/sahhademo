@@ -5,9 +5,9 @@ import * as SecureStore from 'expo-secure-store'; // To store Sahha tokens secur
 import Sahha from 'sahha-react-native'; // Sahha SDK
 
 // Get Sahha credentials from environment variables
-const SAHHA_CLIENT_ID = Constants.expoConfig.extra.sahhaClientId;
-const SAHHA_CLIENT_SECRET = Constants.expoConfig.extra.sahhaClientSecret;
-const SAHHA_ENVIRONMENT = Constants.expoConfig.extra.sahhaEnvironment; // 'sandbox' or 'production'
+const SAHHA_CLIENT_ID = process.env.EXPO_PUBLIC_SAHHA_CLIENT_ID;
+const SAHHA_CLIENT_SECRET = process.env.EXPO_PUBLIC_SAHHA_CLIENT_SECRET;
+const SAHHA_ENVIRONMENT = process.env.EXPO_PUBLIC_SAHHA_ENVIRONMENT; // 'sandbox' or 'production'
 
 const SAHHA_AUTH_URL = `https://${SAHHA_ENVIRONMENT}-api.sahha.ai/v2/auth/token`; // Dynamically get URL
 const SAHHA_ACCESS_TOKEN_KEY = 'sahhaAccessToken';

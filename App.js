@@ -15,9 +15,9 @@ import RegisterScreen from "./screens/RegisterScreen"; // Import the new screen
 
 import Sahha, { SahhaSensor, SahhaSensorStatus } from 'sahha-react-native';
 
-const SAHHA_CLIENT_ID = "P4JZZLVlv8UxnlxhuL7IiMYC19wzZrX4";
-const SAHHA_CLIENT_SECRET = "u8djZm7tRDKPwU1qx538ozPIWG7FZOo4kFhI6Ii9uqXxrLx11vglZBdCrGmkbPc6";
-const SAHHA_ENVIRONMENT = "sandbox";
+const SAHHA_CLIENT_ID = process.env.EXPO_PUBLIC_SAHHA_CLIENT_ID;
+const SAHHA_CLIENT_SECRET = process.env.EXPO_PUBLIC_SAHHA_CLIENT_SECRET;
+const SAHHA_ENVIRONMENT = process.env.EXPO_PUBLIC_SAHHA_ENVIRONMENT;
 
 const initializeSahha = () => {
   try {

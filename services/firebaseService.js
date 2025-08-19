@@ -18,7 +18,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 // Your Firebase configuration - REPLACE WITH YOUR ACTUAL CONFIG
 const firebaseConfig = {
-  apiKey: "AIzaSyDyEYsX2tVADbZ5o_HtyOULW7K0MIXGI6E",
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
   authDomain: "sahha-demo.firebaseapp.com",
   projectId: "sahha-demo",
   storageBucket: "sahha-demo.firebasestorage.app",
@@ -118,8 +118,3 @@ export const observeAuthState = (callback) => {
 
 // --- Firestore Data Functions ---
 
-/**
- * Fetches protected data from a specific Firestore document.
- * Assumes a 'protected_data' collection and a 'demo_doc' document for this example.
- * @returns {Promise<{data: any}|{error: string}>}
- */
