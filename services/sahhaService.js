@@ -7,9 +7,9 @@ import Sahha from 'sahha-react-native'; // Sahha SDK
 // Get Sahha credentials from environment variables
 const SAHHA_CLIENT_ID = process.env.EXPO_PUBLIC_SAHHA_CLIENT_ID;
 const SAHHA_CLIENT_SECRET = process.env.EXPO_PUBLIC_SAHHA_CLIENT_SECRET;
-const SAHHA_ENVIRONMENT = process.env.EXPO_PUBLIC_SAHHA_ENVIRONMENT; // 'sandbox' or 'production'
+const SAHHA_ENVIRONMENT = process.env.EXPO_PUBLIC_SAHHA_ENVIRONMENT;
 
-const SAHHA_AUTH_URL = `https://${SAHHA_ENVIRONMENT}-api.sahha.ai/v2/auth/token`; // Dynamically get URL
+const SAHHA_AUTH_URL = `https://${SAHHA_ENVIRONMENT}-api.sahha.ai/v2/auth/token`; 
 const SAHHA_ACCESS_TOKEN_KEY = 'sahhaAccessToken';
 const SAHHA_REFRESH_TOKEN_KEY = 'sahhaRefreshToken';
 
@@ -34,8 +34,8 @@ export const authenticateWithSahhaApi = async (externalId) => {
       body: JSON.stringify({
         client_id: SAHHA_CLIENT_ID,
         client_secret: SAHHA_CLIENT_SECRET,
-        grant_type: 'client_credentials', // This is typical for initial client auth
-        external_id: externalId, // Pass your user's unique external ID
+        grant_type: 'client_credentials', 
+        external_id: externalId, 
       }),
     });
 
@@ -81,8 +81,7 @@ export const initializeSahhaSdk = async () => {
 
     // Configure Sahha SDK
     await Sahha.configure({
-      environment: SAHHA_ENVIRONMENT,
-      // You might need more configuration here based on Sahha's docs (e.g. privacy settings, permissions etc)
+      environment: SAHHA_ENVIRONMENT
     });
     console.log("Sahha SDK configured.");
 
@@ -121,7 +120,6 @@ export const getSahhaData = async () => {
     if (!ready) {
       return { success: false, error: "Sahha SDK not ready or authenticated." };
     }
-    // Replace with actual Sahha SDK call, e.g., Sahha.getInsights() or Sahha.collectData()
     const dummySahhaData = {
       sahhaMessage: "This is simulated Sahha data!",
       profileScore: 85,
@@ -141,5 +139,4 @@ export const clearSahhaTokens = async () => {
   console.log("Clearing Sahha tokens...");
   await SecureStore.deleteItemAsync(SAHHA_ACCESS_TOKEN_KEY);
   await SecureStore.deleteItemAsync(SAHHA_REFRESH_TOKEN_KEY);
-  // You might also want to call Sahha.deauthenticate() if available
 };
