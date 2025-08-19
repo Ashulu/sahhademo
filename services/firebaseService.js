@@ -16,7 +16,6 @@ import {
 
 import { v4 as uuidv4 } from 'uuid';
 
-// Your Firebase configuration - REPLACE WITH YOUR ACTUAL CONFIG
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
   authDomain: "sahha-demo.firebaseapp.com",
@@ -34,8 +33,6 @@ const auth = getAuth(app);
 const db = getFirestore(app, 'sahha-test-db');
 
 export { db, doc, getDoc };
-
-// --- Authentication Functions ---
 
 export const registerUser = async (email, password) => {
   try {
@@ -76,8 +73,7 @@ export const loginUser = async (email, password) => {
     const user = userCredential.user;
     console.log(`Firebase Service: Login SUCCESS for UID: ${user.uid}`);
 
-    // --- OPTIONAL: Fetch externalId on login ---
-    // If you need the externalId immediately after login, you can fetch it here
+    
     const userProfileRef = doc(db, "user_profiles", user.uid);
     const docSnap = await getDoc(userProfileRef);
 
