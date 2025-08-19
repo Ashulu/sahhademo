@@ -23,8 +23,8 @@ const SAHHA_APP_ID = process.env.EXPO_PUBLIC_SAHHA_APP_ID;
 const SAHHA_APP_SECRET = process.env.EXPO_PUBLIC_SAHHA_APP_SECRET;
 
 const HomeScreen = () => {
-  const { user, externalId, signOut, sensorStatus, checkSensorStatus } = useContext(AuthContext); // <--- Get externalId
-  const [sahhaAuthStatus, setSahhaAuthStatus] = useState("Not Authenticated with Sahha"); // Initial status
+  const { user, externalId, signOut, sensorStatus, checkSensorStatus } = useContext(AuthContext);  
+  const [sahhaAuthStatus, setSahhaAuthStatus] = useState("Not Authenticated with Sahha");  
   const [isSahhaAuthenticating, setIsSahhaAuthenticating] = useState(false);
   const [isEnablingSensors, setIsEnablingSensors] = useState(false);
 
@@ -43,7 +43,7 @@ const HomeScreen = () => {
     setSahhaAuthStatus("Authenticating with Sahha...");
     console.log("HomeScreen: Attempting to authenticate with Sahha using external ID:", externalId);
 
-    // CORRECTED CALL: Pass arguments individually as per the native signature.
+     
     Sahha.authenticate(SAHHA_APP_ID, SAHHA_APP_SECRET, externalId, (error, result) => {
       if (error) {
         console.error("HomeScreen: Sahha.authenticate callback reports an error:", error);
@@ -98,7 +98,7 @@ const HomeScreen = () => {
     });
   };
 
-// --- NEW: Placeholder handler function for Step 3 ---
+ 
   const handleGetSleepStats = () => {
     console.log("HomeScreen: 'Get Sleep Stats' button pressed.");
     
@@ -106,18 +106,18 @@ const HomeScreen = () => {
     setAnalysisData(null);
     setAnalysisError("");
 
-    // Create date objects for the last 7 days.
+     
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(endDate.getDate() - 7);
 
     console.log(`HomeScreen: Fetching stats from ${startDate.toISOString()} to ${endDate.toISOString()}`);
 
-    // CORRECTED: Call Sahha.getStats() with the sensor enum and DATES CONVERTED TO MILLISECONDS.
+     
     Sahha.getScores(
       [SahhaScoreType.sleep, SahhaScoreType.activity, SahhaScoreType.wellbeing],
-      startDate.getTime(), // Pass milliseconds
-      endDate.getTime(),   // Pass milliseconds
+      startDate.getTime(),  
+      endDate.getTime(),    
       (error, value) => {
         if (error) {
           console.error("HomeScreen: Sahha.getStats for Sleep callback reports an error:", error);
@@ -125,7 +125,6 @@ const HomeScreen = () => {
           Alert.alert("Stats Error", `Failed to get sleep stats: ${error}`);
         } else if (value) {
           try {
-            // The documentation shows 'value' is a JSON string that needs to be parsed.
             const statsArray = JSON.parse(value);
             console.log("HomeScreen: Sahha.getStats for Sleep callback reports success. Parsed Data:", statsArray);
             setAnalysisData(statsArray);
@@ -150,14 +149,14 @@ const HomeScreen = () => {
           {user ? user.email : "N/A"}
         </Text>
       </Text>
-      {externalId && ( // Only show if externalId exists
+      {externalId && (  
         <Text style={styles.subtitle}>
           Your Sahha External ID:{" "}
           <Text style={styles.tokenText}>{externalId}...</Text>
         </Text>
       )}
 
-      {/* Display Sahha Auth Status */}
+      
       <Text style={styles.sahhaStatus}>Sahha Status: {sahhaAuthStatus}</Text>
       <Text style={styles.sahhaStatus}>Sensor Status: {sensorStatus}</Text>
 
@@ -165,7 +164,7 @@ const HomeScreen = () => {
         <Button
           title={isSahhaAuthenticating ? "Linking..." : "Link Account"}
           onPress={handleLinkAccount}
-          disabled={isSahhaAuthenticating || !externalId} // Disable if no externalId
+          disabled={isSahhaAuthenticating || !externalId}  
         />
         <View style={{ marginVertical: 10 }} />
 
@@ -175,17 +174,17 @@ const HomeScreen = () => {
           disabled={!sahhaAuthStatus.includes('Authenticated') || isEnablingSensors}
         />
 
-        {/* --- NEW: "Get Sahha Analysis" Button --- */}
+         
         <Button
           title={isLoadingAnalysis ? "Fetching Stats..." : "Get Sahha Stats"}
           onPress={handleGetSleepStats}
           disabled={sensorStatus !== 'Enabled' || isLoadingAnalysis}
         />
-        {/* --- END NEW --- */}
+        
 
       </View>
 
-      {/* --- NEW: Placeholder UI for Analysis Data --- */}
+      
       {isLoadingAnalysis && <ActivityIndicator size="large" color="#0000ff" />}
 
       {analysisError ? (
@@ -202,7 +201,7 @@ const HomeScreen = () => {
           />
         </View>
       )}
-      {/* --- END NEW --- */}
+       
 
 
       <View style={styles.spacer} />
@@ -219,7 +218,7 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "#f5f5f5",
   },
-  listContainer: { // <--- ADD THIS NEW STYLE
+  listContainer: {  
     width: '100%',
     marginTop: 20,
   },
@@ -231,7 +230,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    marginBottom: 10, // Adjusted for second subtitle
+    marginBottom: 10,  
     textAlign: "center",
     color: "#555",
   },
@@ -241,7 +240,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: "80%",
-    marginTop: 20, // Adjusted margin
+    marginTop: 20,  
     marginBottom: 30,
   },
   loaderContainer: {
@@ -283,7 +282,7 @@ const styles = StyleSheet.create({
   },
   sahhaStatus: {
     fontSize: 14,
-    marginTop: 5, // Reduced margin to fit more status text
+    marginTop: 5,  
     marginBottom: 5,
     color: '#666',
     textAlign: 'center',
