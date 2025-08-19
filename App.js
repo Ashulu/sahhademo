@@ -11,7 +11,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AuthContext, { AuthProvider } from "./context/AuthContext";
 import LoginScreen from "./screens/LoginScreen";
 import HomeScreen from "./screens/HomeScreen";
-import RegisterScreen from "./screens/RegisterScreen"; // Import the new screen
+import RegisterScreen from "./screens/RegisterScreen";  
 
 import Sahha, { SahhaSensor, SahhaSensorStatus } from 'sahha-react-native';
 
@@ -22,7 +22,6 @@ const SAHHA_ENVIRONMENT = process.env.EXPO_PUBLIC_SAHHA_ENVIRONMENT;
 const initializeSahha = () => {
   try {
     console.log("App.js: Attempting to configure Sahha SDK...");
-    // --- ADD THIS LOG TO SEE WHAT WAS IMPORTED ---
     console.log('App.js: Imported Sahha object:', Sahha);
 
     const config = { 
@@ -31,14 +30,12 @@ const initializeSahha = () => {
         environment: SAHHA_ENVIRONMENT,
      };
 
-    // --- CORRECTED FUNCTION CALL (No SahhaSDK prefix) ---
     Sahha.configure(config, (error, success) => {
       if (error) {
         console.error("App.js: Sahha configure callback reports an error:", error);
         return;
       }
       console.log("App.js: Sahha configure callback reports success:", success);
-      // We will move the checkSensorStatus call to AuthContext to keep things clean
     });
   } catch (error) {
     console.error("App.js: Failed to configure Sahha SDK (try/catch block):", error);
@@ -47,13 +44,12 @@ const initializeSahha = () => {
 
 const Stack = createStackNavigator();
 
-// This component uses the AuthContext to decide which screen to show
 function AppNavigator() {
-  const { user, isLoading, checkSensorStatus } = useContext(AuthContext); // Use 'user' instead of 'userToken'
+  const { user, isLoading, checkSensorStatus } = useContext(AuthContext);  
   
   useEffect(() => {
     initializeSahha();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);  
 
   if (isLoading) {
     return (
@@ -66,7 +62,6 @@ function AppNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {user == null ? (
-        // No user logged in, show Auth flow
         <Stack.Group>
           <Stack.Screen
             name="Login"
@@ -74,7 +69,7 @@ function AppNavigator() {
             options={{ title: "Sign in" }}
           />
           <Stack.Screen
-            name="Register" // Add the Register screen
+            name="Register"
             component={RegisterScreen}
             options={{ title: "Register" }}
           />
