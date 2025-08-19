@@ -3,19 +3,17 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-// A mapping for colors to make the 'state' look nice
+
 const stateColors = {
-  high: '#4CAF50', // green
-  medium: '#FFC107', // amber
-  low: '#F44336', // red
-  default: '#607D8B', // blue grey
+  high: '#4CAF50', 
+  medium: '#FFC107',
+  low: '#F44336', 
+  default: '#607D8B', 
 };
 
 const StatCard = ({ item }) => {
-  // item is one of the objects from the Sahha analysis array
   const { type, state, score, dataSources } = item;
 
-  // Capitalize the first letter of the type (e.g., 'sleep' -> 'Sleep')
   const formattedType = type.charAt(0).toUpperCase() + type.slice(1);
   const formattedScore = `${score}/1`;
   const formattedDataSources = dataSources.join(', ');
@@ -68,7 +66,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 12,
-    overflow: 'hidden', // Ensures the background respects the borderRadius
+    overflow: 'hidden', 
     textTransform: 'uppercase',
   },
   body: {
