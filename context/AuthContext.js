@@ -1,17 +1,17 @@
 // context/AuthContext.js
 
 import React, { createContext, useState, useEffect, useMemo, useCallback } from "react";
-import { AppState } from "react-native"; // <--- IMPORT AppState
-// Import all necessary Firebase functions directly from the service
+import { AppState } from "react-native";  
+ 
 import Sahha, { SahhaSensor, SahhaSensorStatus } from 'sahha-react-native';
 import {
   loginUser,
   registerUser,
   logoutUser,
   observeAuthState,
-  db, // <--- Import the initialized Firestore instance
-  doc, // <--- Import doc
-  getDoc, // <--- Import getDoc
+  db,  
+  doc,  
+  getDoc,  
 } from "../services/firebaseService";
 
 const AuthContext = createContext();
@@ -34,19 +34,15 @@ export const AuthProvider = ({ children }) => {
         return;
       }
       console.log("AuthContext: Got sensor status map:", statusResult);
-      // Logic to determine a simple overall status for the UI.
-      // We check 'steps' as a representative sensor.
-      // --- NEW LOGIC TO HANDLE BOTH OBJECT AND NUMBER ---
-      let finalStatus = "Not Enabled"; // Default status
+      let finalStatus = "Not Enabled"; 
 
       if (typeof statusResult === 'number') {
-        if (statusResult === 3) { // As per docs, 3 means enabled
+        if (statusResult === 3) { 
           finalStatus = "Enabled";
-        } else if (statusResult === 0) { // Assuming 0 might be pending, based on common enum patterns
+        } else if (statusResult === 0) { 
           finalStatus = "Pending Permission";
         }
       } 
-      // Then, handle the documented/expected case (an object) as a fallback
       else if (typeof statusResult === 'object' && statusResult !== null) {
         if (statusResult.steps === SahhaSensorStatus.enabled || statusResult.sleep === SahhaSensorStatus.enabled) {
           finalStatus = "Enabled";
@@ -57,19 +53,15 @@ export const AuthProvider = ({ children }) => {
       
       console.log("AuthContext: Final determined sensor status:", finalStatus);
       setSensorStatus(finalStatus);
-      // --- END NEW LOGIC ---
     });
   }, []);
 
   useEffect(() => {
-    console.log("AuthContext: Setting up auth state observer."); // <-- New log
+    console.log("AuthContext: Setting up auth state observer.");
     const unsubscribe = observeAuthState(async (firebaseUser) => {
-      // --- CRUCIAL NEW LOG HERE ---
       console.log("AuthContext: onAuthStateChanged fired. firebaseUser:", firebaseUser ? firebaseUser.email : null);
-      // --- END NEW LOG ---
       setUser(firebaseUser);
       if (firebaseUser) {
-        // If a user is logged in, try to fetch their profile to get externalId
         console.log("AuthContext: User detected/logged in. UID:", firebaseUser.uid);
         const userProfileRef = doc(db, "user_profiles", firebaseUser.uid);
         try {
@@ -93,35 +85,28 @@ export const AuthProvider = ({ children }) => {
     });
 
     return unsubscribe;
-  }, []); // Empty dependency array means this runs once on mount
+  }, []); 
 
-  // --- NEW: Listen for App State Changes ---
   useEffect(() => {
-    // This function will be called whenever the app's state changes
     const handleAppStateChange = (nextAppState) => {
-      // We only care about when the app becomes 'active' (comes to the foreground)
       if (nextAppState === 'active') {
         console.log("AuthContext: App has come to the foreground. Re-checking sensor status.");
         checkSensorStatus();
       }
     };
 
-    // Subscribe to app state changes
     const subscription = AppState.addEventListener('change', handleAppStateChange);
 
-    // Unsubscribe when the component unmounts (cleanup)
     return () => {
       subscription.remove();
     };
-  }, [checkSensorStatus]); // Re-run if checkSensorStatus function changes (it won't, due to useCallback)
-  // --- END NEW LOGIC ---
+  }, [checkSensorStatus]); 
 
   const authContext = useMemo(
     () => ({
       signIn: async (email, password) => {
         setIsLoading(true);
         const result = await loginUser(email, password);
-        // The onAuthStateChanged listener handles setting user and externalId
         setIsLoading(false);
         return result;
       },
@@ -129,7 +114,6 @@ export const AuthProvider = ({ children }) => {
       signUp: async (email, password) => {
         setIsLoading(true);
         const result = await registerUser(email, password);
-        // The onAuthStateChanged listener handles setting user and externalId
         setIsLoading(false);
         return result;
       },
@@ -137,7 +121,6 @@ export const AuthProvider = ({ children }) => {
       signOut: async () => {
         setIsLoading(true);
         const result = await logoutUser();
-        // The onAuthStateChanged listener handles setting user and externalId
         setIsLoading(false);
         return result;
       },
