@@ -9,12 +9,12 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-  TouchableOpacity, // Add this import
+  TouchableOpacity,  
 } from "react-native";
 import AuthContext from "../context/AuthContext";
 
-const LoginScreen = ({ navigation }) => { // Add navigation prop
-  const [email, setEmail] = useState(""); // Change to email
+const LoginScreen = ({ navigation }) => {  
+  const [email, setEmail] = useState("");  
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -24,14 +24,13 @@ const LoginScreen = ({ navigation }) => { // Add navigation prop
   const handleLogin = async () => {
     setErrorMessage("");
     setIsLoading(true);
-    const result = await signIn(email, password); // Use email
+    const result = await signIn(email, password);  
     setIsLoading(false);
 
     if (!result.success) {
       setErrorMessage(result.error || "Something went wrong.");
       Alert.alert("Login Failed", result.error || "Please try again.");
     }
-    // No explicit navigation here, AuthContext change will handle it in App.js
   };
 
   return (
@@ -39,9 +38,9 @@ const LoginScreen = ({ navigation }) => { // Add navigation prop
       <Text style={styles.title}>Welcome Back!</Text>
       <TextInput
         style={styles.input}
-        placeholder="Email" // Change placeholder
-        value={email} // Use email
-        onChangeText={setEmail} // Use setEmail
+        placeholder="Email"  
+        value={email}  
+        onChangeText={setEmail}  
         autoCapitalize="none"
         keyboardType="email-address"
       />
@@ -64,7 +63,7 @@ const LoginScreen = ({ navigation }) => { // Add navigation prop
 
       {/* Add Register Link */}
       <TouchableOpacity
-        onPress={() => navigation.navigate("Register")} // Navigate to RegisterScreen
+        onPress={() => navigation.navigate("Register")}  
         style={styles.registerLink}
       >
         <Text style={styles.registerText}>Don't have an account? Register</Text>
@@ -103,7 +102,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textAlign: "center",
   },
-  // New styles for the register link
   registerLink: {
     marginTop: 20,
   },
