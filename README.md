@@ -7,5 +7,4 @@ Implemented:
 * Sahha Profile Creation when user registers
 * Sahha sensor integration to allow users to select what Healthkit permissions are given to Sahha
 * Fetching Health data from Sahha to display to the users
-
-updated readme
+update reamde changes
