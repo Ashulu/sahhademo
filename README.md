@@ -4,9 +4,6 @@
 
 This project serves as a template for building a mobile app that requires user registration, secure login, and interaction with a protected external API. It features a clean, component-based structure and handles complex native integrations, such as permissions for iOS HealthKit, through an Expo Dev Client.
 
-![App Screenshot](path/to/your/screenshot.png)
-*(**Note:** Replace `path/to/your/screenshot.png` with a real screenshot of your app's home screen after fetching data.)*
-
 ---
 
 ## Core Features
